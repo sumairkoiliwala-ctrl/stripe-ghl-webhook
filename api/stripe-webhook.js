@@ -22,30 +22,36 @@ export default async function handler(req, res) {
 
       const item = fullSession.line_items.data[0];
 
+      // Customer info
       const email = fullSession.customer_details?.email || null;
-      const courseName = item.description;
+      const fullName = fullSession.customer_details?.name || "";
+      const phone = fullSession.customer_details?.phone || null;
+
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts[0] || null;
+      const lastName = nameParts.slice(1).join(" ") || null;
+
+      // Payment info
       const amount = item.amount_total / 100;
-      const priceType = item.price.type;
+      const priceType = item.price.type; // one_time or recurring
       const interval = item.price.recurring?.interval || null;
+      const courseName = item.description;
+      const sessionId = session.id;
+
+      // Payment date
+      const paymentDate = new Date(fullSession.created * 1000).toISOString();
 
       await axios.post(process.env.GHL_WEBHOOK_URL, {
+        firstName,
+        lastName,
         email,
-        courseName,
+        phone,
+        paymentDate,
         amount,
         priceType,
+        courseName,
         interval,
-        stripeSessionId: session.id
-      });
-    }
-
-    if (event.type === "invoice.paid") {
-      const invoice = event.data.object;
-
-      await axios.post(process.env.GHL_WEBHOOK_URL, {
-        email: invoice.customer_email,
-        amount: invoice.amount_paid / 100,
-        renewal: true,
-        invoiceId: invoice.id
+        sessionId
       });
     }
 
