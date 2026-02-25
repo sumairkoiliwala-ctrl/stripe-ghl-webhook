@@ -1,0 +1,8 @@
+{
+  "name": "stripe-ghl-webhook",
+  "version": "1.0.0",
+  "dependencies": {
+    "stripe": "^14.0.0",
+    "axios": "^1.6.0"
+  }
+}
