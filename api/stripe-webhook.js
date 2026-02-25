@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import axios from "axios";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -23,10 +22,11 @@ export default async function handler(req, res) {
         lineItems.data[0]?.description || "Unknown Course";
 
       const amount = session.amount_total / 100;
-      const email = session.customer_details.email;
+      const email = session.customer_details?.email || "No Email";
 
-      // Send clean data to GHL
-      await axios.post(process.env.GHL_WEBHOOK_URL, {
+      // Just log data for now
+      console.log("Payment Successful:");
+      console.log({
         email,
         courseName,
         amount,
