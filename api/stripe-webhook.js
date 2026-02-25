@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import axios from "axios";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -11,7 +12,6 @@ export default async function handler(req, res) {
 
   try {
 
-    // 1️⃣ First payment (one-time OR subscription start)
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
@@ -25,11 +25,10 @@ export default async function handler(req, res) {
       const email = fullSession.customer_details?.email || null;
       const courseName = item.description;
       const amount = item.amount_total / 100;
-      const priceType = item.price.type; // one_time or recurring
+      const priceType = item.price.type;
       const interval = item.price.recurring?.interval || null;
 
-      console.log("Checkout Completed:");
-      console.log({
+      await axios.post(process.env.GHL_WEBHOOK_URL, {
         email,
         courseName,
         amount,
@@ -39,17 +38,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2️⃣ Subscription renewals
     if (event.type === "invoice.paid") {
       const invoice = event.data.object;
 
-      const email = invoice.customer_email;
-      const amount = invoice.amount_paid / 100;
-
-      console.log("Subscription Renewal:");
-      console.log({
-        email,
-        amount,
+      await axios.post(process.env.GHL_WEBHOOK_URL, {
+        email: invoice.customer_email,
+        amount: invoice.amount_paid / 100,
+        renewal: true,
         invoiceId: invoice.id
       });
     }
